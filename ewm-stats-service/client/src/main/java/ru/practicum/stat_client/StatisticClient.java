@@ -43,7 +43,7 @@ public class StatisticClient {
         parameters.put("start", start);
         parameters.put("end", end);
         if (uris != null) {
-            parameters.put("uris", uris);
+            parameters.put("uris", String.join(",", uris));
         }
         if (unique != null) {
             parameters.put("unique", unique);

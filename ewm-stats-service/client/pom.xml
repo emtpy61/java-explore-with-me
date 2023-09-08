@@ -11,7 +11,7 @@
     </parent>
     <name>Statistic client</name>
 
-    <artifactId>stat_client</artifactId>
+    <artifactId>stat-client</artifactId>
     <packaging>jar</packaging>
 
     <properties>
