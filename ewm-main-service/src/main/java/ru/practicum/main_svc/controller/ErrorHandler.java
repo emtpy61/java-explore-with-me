@@ -66,25 +66,4 @@ public class ErrorHandler {
                 exception.getMessage(),
                 LocalDateTime.now().format(dateFormatter));
     }
-
-    @ExceptionHandler({Exception.class})
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiError handleOtherExceptions(final Exception exception) {
-        return new ApiError("Не обработал",
-                exception.getClass().getName(),
-                exception.getMessage(),
-                LocalDateTime.now().format(dateFormatter));
-    }
-
-/*
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiError handleConflict2Exception(final Exception exception) {
-        return new ApiError(HttpStatus.CONFLICT.getReasonPhrase().toUpperCase(),
-                "Integrity constraint has been violated.",
-                exception.getMessage(),
-                LocalDateTime.now().format(dateFormatter));
-    }
-
-    */
 }
