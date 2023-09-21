@@ -126,7 +126,7 @@ public class RequestServiceImpl implements RequestService {
                 eventRequestStatusUpdateRequest.getRequestIds());
 
         for (Request request : requests) {
-            if (request.getStatus().equals(RequestStatus.REJECTED)) {
+            if (!request.getStatus().equals(RequestStatus.PENDING)) {
                 throw new WrongRequestStatusException("Request must have status PENDING");
             }
             switch (requestStatus) {
@@ -138,9 +138,6 @@ public class RequestServiceImpl implements RequestService {
                     confirmedRequests.add(request);
                     break;
                 case REJECTED:
-                    if (request.getStatus().equals(RequestStatus.CONFIRMED)) {
-                        throw new WrongRequestStatusException("Request must have status PENDING");
-                    }
                     request.setStatus(RequestStatus.REJECTED);
                     rejectedRequests.add(request);
                     break;

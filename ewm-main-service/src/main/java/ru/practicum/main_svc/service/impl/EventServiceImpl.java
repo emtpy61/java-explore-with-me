@@ -36,9 +36,8 @@ import ru.practicum.stat_dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -82,6 +81,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new EventNotFoundException(id));
         getViewsFromStatisticServer(event);
         event.populateConfirmedRequests();
+        getViewsFromStatisticServer(event);
         return eventMapper.toDto(event);
     }
 
@@ -90,6 +90,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
         event.populateConfirmedRequests();
+        getViewsFromStatisticServer(event);
         return eventMapper.toDto(event);
     }
 
@@ -99,6 +100,7 @@ public class EventServiceImpl implements EventService {
             String requestURI, String remoteAddr) {
 
         sendToStatisticServer(requestURI, remoteAddr);
+
         LocalDateTime start = (rangeStart != null) ? LocalDateTime.parse(rangeStart, dateFormatter) : null;
         LocalDateTime end = (rangeEnd != null) ? LocalDateTime.parse(rangeEnd, dateFormatter) : null;
 
@@ -157,6 +159,7 @@ public class EventServiceImpl implements EventService {
             return Collections.emptyList();
         }
         events.forEach(Event::populateConfirmedRequests);
+        getViewsFromStatisticServer(events);
         return eventMapper.toShortDtoList(events);
     }
 
@@ -165,6 +168,7 @@ public class EventServiceImpl implements EventService {
         Pageable page = PageRequest.of(from / size, size);
         List<Event> events = eventRepository.findAllByInitiatorId(userId, page).toList();
         events.forEach(Event::populateConfirmedRequests);
+        getViewsFromStatisticServer(events);
         return eventMapper.toShortDtoList(events);
     }
 
@@ -209,6 +213,7 @@ public class EventServiceImpl implements EventService {
             return Collections.emptyList();
         }
         events.forEach(Event::populateConfirmedRequests);
+        getViewsFromStatisticServer(events);
         return eventMapper.toDtoList(events);
     }
 
@@ -227,6 +232,7 @@ public class EventServiceImpl implements EventService {
             }
         }
         event = eventRepository.save(event);
+        getViewsFromStatisticServer(event);
         return eventMapper.toDto(event);
     }
 
@@ -244,6 +250,7 @@ public class EventServiceImpl implements EventService {
         }
 
         event = eventRepository.save(event);
+        getViewsFromStatisticServer(event);
         return eventMapper.toDto(event);
     }
 
@@ -337,7 +344,6 @@ public class EventServiceImpl implements EventService {
         endpointHitDto.setUri(requestURI);
         endpointHitDto.setApp("main-service");
         endpointHitDto.setIp(remoteAddr);
-        System.out.println(endpointHitDto);
         statisticClient.addStats(endpointHitDto);
     }
 
@@ -352,6 +358,25 @@ public class EventServiceImpl implements EventService {
             event.setViews(stats.get(0).getHits());
         } else {
             event.setViews(0L);
+        }
+    }
+
+    public void getViewsFromStatisticServer(List<Event> events) {
+        Optional<LocalDateTime> minCreatedOn = events.stream()
+                .map(Event::getCreatedOn)
+                .min(LocalDateTime::compareTo);
+        if (minCreatedOn.isPresent()) {
+            LocalDateTime start = minCreatedOn.get();
+            List<String> uris = events.stream()
+                    .map(event -> "/events/" + event.getId())
+                    .collect(Collectors.toList());
+            Map<String, Event> eventsUri = events.stream()
+                    .collect(Collectors.toMap(
+                            event -> "/events/" + event.getId(),
+                            event -> event
+                    ));
+            List<ViewStatsDto> stats = statisticClient.getStats(start, LocalDateTime.now(), uris, true);
+            stats.forEach((stat) -> eventsUri.get(stat.getUri()).setViews(stat.getHits()));
         }
     }
 }
