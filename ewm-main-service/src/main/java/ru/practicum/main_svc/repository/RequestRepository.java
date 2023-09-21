@@ -1,14 +1,11 @@
 package ru.practicum.main_svc.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.practicum.main_svc.enums.RequestStatus;
 import ru.practicum.main_svc.model.Request;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Repository

@@ -7,7 +7,6 @@ import ru.practicum.main_svc.dto.event.UpdateEventRequest;
 import ru.practicum.main_svc.enums.EventState;
 import ru.practicum.main_svc.enums.SortValue;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public interface EventService {

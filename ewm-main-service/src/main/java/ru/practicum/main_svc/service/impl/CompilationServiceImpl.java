@@ -18,7 +18,6 @@ import ru.practicum.main_svc.repository.EventRepository;
 import ru.practicum.main_svc.service.CompilationService;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 @Service

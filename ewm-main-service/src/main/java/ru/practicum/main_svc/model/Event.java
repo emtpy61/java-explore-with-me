@@ -59,5 +59,4 @@ public class Event {
                 .filter(request -> request.getStatus() == RequestStatus.CONFIRMED)
                 .count());
     }
-
 }
