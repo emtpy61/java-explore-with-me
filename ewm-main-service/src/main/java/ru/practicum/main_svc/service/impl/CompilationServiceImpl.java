@@ -17,6 +17,7 @@ import ru.practicum.main_svc.repository.CompilationRepository;
 import ru.practicum.main_svc.repository.EventRepository;
 import ru.practicum.main_svc.service.CompilationService;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation compilation = new Compilation();
         if (newCompilationDto.getEvents() != null) {
             List<Event> events = eventRepository.findAllByIdIn(newCompilationDto.getEvents());
-            compilation.setEvents(new HashSet<>(events));
+            compilation.setEvents(new ArrayList<>(events));
         }
         compilation.setPinned(newCompilationDto.getPinned() != null && newCompilationDto.getPinned());
         compilation.setTitle(newCompilationDto.getTitle());
@@ -54,7 +55,7 @@ public class CompilationServiceImpl implements CompilationService {
         List<Long> eventsIds = updateCompilationRequest.getEvents();
         if (eventsIds != null) {
             List<Event> events = eventRepository.findAllByIdIn(updateCompilationRequest.getEvents());
-            compilation.setEvents(new HashSet<>(events));
+            compilation.setEvents(new ArrayList<>(events));
         }
         if (updateCompilationRequest.getPinned() != null) {
             compilation.setPinned(updateCompilationRequest.getPinned());

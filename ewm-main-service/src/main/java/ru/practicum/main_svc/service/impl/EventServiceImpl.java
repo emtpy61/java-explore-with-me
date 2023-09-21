@@ -14,6 +14,7 @@ import ru.practicum.main_svc.dto.event.EventShortDto;
 import ru.practicum.main_svc.dto.event.NewEventDto;
 import ru.practicum.main_svc.dto.event.UpdateEventRequest;
 import ru.practicum.main_svc.enums.EventState;
+import ru.practicum.main_svc.enums.RequestStatus;
 import ru.practicum.main_svc.enums.SortValue;
 import ru.practicum.main_svc.enums.StateAction;
 import ru.practicum.main_svc.exception.ewm.*;
@@ -21,10 +22,7 @@ import ru.practicum.main_svc.exception.ewm.NotFoundException.CategoryNotFoundExc
 import ru.practicum.main_svc.exception.ewm.NotFoundException.EventNotFoundException;
 import ru.practicum.main_svc.exception.ewm.NotFoundException.UserNotFoundException;
 import ru.practicum.main_svc.mapper.EventMapper;
-import ru.practicum.main_svc.model.Category;
-import ru.practicum.main_svc.model.Event;
-import ru.practicum.main_svc.model.QEvent;
-import ru.practicum.main_svc.model.User;
+import ru.practicum.main_svc.model.*;
 import ru.practicum.main_svc.repository.CategoryRepository;
 import ru.practicum.main_svc.repository.EventRepository;
 import ru.practicum.main_svc.repository.RequestRepository;
@@ -38,7 +36,9 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -76,11 +76,12 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventFullDto getEvent(Long id, HttpServletRequest request) {
-        sendToStatisticServer(request);
+    public EventFullDto getEvent(Long id, String requestURI, String remoteAddr) {
+        sendToStatisticServer(requestURI, remoteAddr);
         Event event = eventRepository.findByIdAndPublishedOnIsNotNull(id)
                 .orElseThrow(() -> new EventNotFoundException(id));
         getViewsFromStatisticServer(event);
+        event.populateConfirmedRequests();
         return eventMapper.toDto(event);
     }
 
@@ -88,15 +89,16 @@ public class EventServiceImpl implements EventService {
     public EventFullDto getEventByUser(Long userId, Long eventId) {
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
+        event.populateConfirmedRequests();
         return eventMapper.toDto(event);
     }
 
     @Override
     public List<EventShortDto> getEvents(String text, List<Long> categories, Boolean paid, String rangeStart,
             String rangeEnd, Boolean onlyAvailable, SortValue sort, Integer from, Integer size,
-            HttpServletRequest request) {
+            String requestURI, String remoteAddr) {
 
-        sendToStatisticServer(request);
+        sendToStatisticServer(requestURI,remoteAddr);
         LocalDateTime start = (rangeStart != null) ? LocalDateTime.parse(rangeStart, dateFormatter) : null;
         LocalDateTime end = (rangeEnd != null) ? LocalDateTime.parse(rangeEnd, dateFormatter) : null;
 
@@ -104,8 +106,8 @@ public class EventServiceImpl implements EventService {
             throw new WrongDateTimeException("Start must be before end");
         }
 
-        Pageable pageable = PageRequest.of(from / size, size,
-                sort == SortValue.EVENT_DATE ? Sort.by("eventDate") : Sort.by("views"));
+        Pageable pageable;
+
         QEvent event = QEvent.event;
 
         Predicate predicate = event.isNotNull();
@@ -133,21 +135,36 @@ public class EventServiceImpl implements EventService {
         if (end != null) {
             predicate = ExpressionUtils.and(predicate, event.eventDate.loe(end));
         }
-
-        predicate = ExpressionUtils.and(predicate, event.confirmedRequests.lt(event.participantLimit));
+        Predicate availablePredicate = event.participantLimit.eq(0);
+        if (onlyAvailable) {
+            availablePredicate = ExpressionUtils.or(availablePredicate, event.participantLimit.goe(event.requestList.size()));
+            availablePredicate = ExpressionUtils.or(availablePredicate, event.requestModeration.eq(false));
+            predicate = ExpressionUtils.and(predicate,availablePredicate);
+        }
+        if (sort != null && sort.equals(SortValue.EVENT_DATE)) {
+            pageable = PageRequest.of(from / size, size, Sort.by("eventDate"));
+        } else {
+            pageable = PageRequest.of(from / size, size);
+        }
 
         List<Event> events = eventRepository.findAll(predicate, pageable).getContent();
 
+        if (sort != null && sort.equals(SortValue.VIEWS)) {
+            events.sort(Comparator.comparing(Event::getViews));
+        }
         if (events.isEmpty()) {
             return Collections.emptyList();
         }
+        events.forEach(Event::populateConfirmedRequests);
         return eventMapper.toShortDtoList(events);
     }
 
     @Override
     public List<EventShortDto> getEventsByUser(Long userId, Integer from, Integer size) {
         Pageable page = PageRequest.of(from / size, size);
-        return eventMapper.toShortDtoList(eventRepository.findAllByInitiatorId(userId, page).toList());
+        List<Event> events =eventRepository.findAllByInitiatorId(userId, page).toList();
+        events.forEach(Event::populateConfirmedRequests);
+        return eventMapper.toShortDtoList(events);
     }
 
     @Override
@@ -190,6 +207,7 @@ public class EventServiceImpl implements EventService {
         if (events.isEmpty()) {
             return Collections.emptyList();
         }
+        events.forEach(Event::populateConfirmedRequests);
         return eventMapper.toDtoList(events);
     }
 
@@ -311,13 +329,13 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private void sendToStatisticServer(HttpServletRequest request) {
+    private void sendToStatisticServer(String requestURI,String remoteAddr) {
 
         EndpointHitDto endpointHitDto = new EndpointHitDto();
         endpointHitDto.setTimestamp(LocalDateTime.now());
-        endpointHitDto.setUri(request.getRequestURI());
+        endpointHitDto.setUri(requestURI);
         endpointHitDto.setApp("main-service");
-        endpointHitDto.setIp(request.getRemoteAddr());
+        endpointHitDto.setIp(remoteAddr);
         System.out.println(endpointHitDto);
         statisticClient.addStats(endpointHitDto);
     }

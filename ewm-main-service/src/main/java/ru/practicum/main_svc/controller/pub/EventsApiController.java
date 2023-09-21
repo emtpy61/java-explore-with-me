@@ -2,6 +2,7 @@ package ru.practicum.main_svc.controller.pub;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main_svc.dto.event.EventFullDto;
 import ru.practicum.main_svc.dto.event.EventShortDto;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping(path = "/events")
 @RequiredArgsConstructor
+@Validated
 @Slf4j
 public class EventsApiController {
     private final EventService eventService;
@@ -24,7 +26,7 @@ public class EventsApiController {
     public EventFullDto getEvent(@PathVariable("id") Long id,
             HttpServletRequest request) {
 
-        return eventService.getEvent(id, request);
+        return eventService.getEvent(id, request.getRequestURI(), request.getRemoteAddr());
     }
 
 
@@ -43,6 +45,6 @@ public class EventsApiController {
             HttpServletRequest request) {
 
         return eventService.getEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size,
-                request);
+                request.getRequestURI(), request.getRemoteAddr());
     }
 }

@@ -3,6 +3,7 @@ package ru.practicum.main_svc.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main_svc.dto.category.CategoryDto;
 import ru.practicum.main_svc.dto.category.NewCategoryDto;
@@ -27,6 +28,7 @@ import java.util.List;
 @RestController
 @RequestMapping(path = "/admin")
 @RequiredArgsConstructor
+@Validated
 @Slf4j
 public class AdminApiController {
     private final CategoryService categoryService;
@@ -41,7 +43,6 @@ public class AdminApiController {
     }
 
     @PatchMapping("/categories/{catId}")
-
     public CategoryDto updateCategory(@PathVariable("catId") Long catId,
             @Valid @RequestBody CategoryDto body) {
         return categoryService.updateCategory(catId, body);

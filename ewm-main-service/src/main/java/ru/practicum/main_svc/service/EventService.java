@@ -13,7 +13,7 @@ import java.util.List;
 public interface EventService {
     EventFullDto createEvent(Long userId, NewEventDto newEventDto);
 
-    EventFullDto getEvent(Long id, HttpServletRequest request);
+    EventFullDto getEvent(Long id, String requestURI, String remoteAddr);
 
     EventFullDto getEventByUser(Long userId, Long eventId);
 
@@ -26,7 +26,8 @@ public interface EventService {
             SortValue sort,
             Integer from,
             Integer size,
-            HttpServletRequest request);
+            String requestURI,
+            String remoteAddr);
 
     List<EventShortDto> getEventsByUser(Long userId, Integer from, Integer size);
 

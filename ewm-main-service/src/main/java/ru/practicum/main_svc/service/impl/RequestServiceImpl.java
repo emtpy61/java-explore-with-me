@@ -45,6 +45,7 @@ public class RequestServiceImpl implements RequestService {
         }
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
+        event.populateConfirmedRequests();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
@@ -56,20 +57,15 @@ public class RequestServiceImpl implements RequestService {
         if (!event.getState().equals(EventState.PUBLISHED)) {
             throw new EventNotPublishedException("Event is not published yet");
         }
-        int confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
-        int participationLimit = event.getParticipantLimit();
 
-        if (confirmedRequests >= participationLimit && participationLimit != 0) {
+        if (event.getConfirmedRequests() >= event.getParticipantLimit()
+                && event.getParticipantLimit() != 0) {
             throw new ParticipantLimitException("Member limit exceeded ");
         }
-
-        long requests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
         Request request = new Request();
 
         if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
             request.setStatus(RequestStatus.CONFIRMED);
-            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
-            event = eventRepository.save(event);
         } else {
             request.setStatus(RequestStatus.PENDING);
         }
@@ -113,6 +109,7 @@ public class RequestServiceImpl implements RequestService {
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
+        event.populateConfirmedRequests();
         if (!event.getInitiator().getId().equals(userId)) {
             throw new AccessDeniedException("Unable to update request status by a non-initiator");
         }
@@ -139,7 +136,6 @@ public class RequestServiceImpl implements RequestService {
                     }
                     request.setStatus(RequestStatus.CONFIRMED);
                     confirmedRequests.add(request);
-                    event.setConfirmedRequests(event.getConfirmedRequests() + 1);
                     break;
                 case REJECTED:
                     if (request.getStatus().equals(RequestStatus.CONFIRMED)) {
@@ -153,7 +149,6 @@ public class RequestServiceImpl implements RequestService {
         eventRequestStatusUpdateResult.setConfirmedRequests(requestMapper.toDtoList(confirmedRequests));
         eventRequestStatusUpdateResult.setRejectedRequests(requestMapper.toDtoList(rejectedRequests));
         requestRepository.saveAll(requests);
-        eventRepository.save(event);
         return eventRequestStatusUpdateResult;
     }
 }

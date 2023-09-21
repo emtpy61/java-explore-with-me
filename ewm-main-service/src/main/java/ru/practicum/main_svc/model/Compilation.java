@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -30,6 +31,6 @@ public class Compilation {
             inverseJoinColumns = @JoinColumn(name = "event_id")
     )
     @OrderBy("eventDate")
-    private Set<Event> events;
+    private List<Event> events;
     private Boolean pinned;
 }
