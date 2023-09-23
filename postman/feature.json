@@ -2061,7 +2061,7 @@
 									"});\r",
 									"\r",
 									"source = pm.collectionVariables.get('response');\r",
-									"comId = pm.collectionVariables.get('comId');\r",
+									"comId = parseInt(pm.collectionVariables.get('comId'));\r",
 									"\r",
 									"pm.test(\"Комментарий должен быть найден до удаления\", function () {\r",
 									"    pm.expect(source.id).equal(comId, 'Идентификтор комментария должен совпадать с удаляемым');\r",
