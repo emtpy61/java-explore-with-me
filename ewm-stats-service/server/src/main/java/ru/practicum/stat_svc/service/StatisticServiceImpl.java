@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.stat_dto.EndpointHitDto;
 import ru.practicum.stat_dto.ViewStatsDto;
+import ru.practicum.stat_svc.exception.WrongDateTimeException;
 import ru.practicum.stat_svc.mapper.EndpointHitMapper;
 import ru.practicum.stat_svc.mapper.ViewStatsMapper;
 import ru.practicum.stat_svc.repository.StatisticRepository;
@@ -33,6 +34,9 @@ public class StatisticServiceImpl implements StatisticService {
 
     @Override
     public List<ViewStatsDto> getStatistic(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+        if (start == null || end == null || start.isAfter(end)) {
+            throw new WrongDateTimeException("Start and end must be provided and Start must be before end");
+        }
         return unique ? viewStatsMapper.toModel(statisticRepository.getStatsUniqueIp(start, end, uris))
                 : viewStatsMapper.toModel(statisticRepository.getStats(start, end, uris));
     }
