@@ -7,6 +7,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main_svc.dto.category.CategoryDto;
 import ru.practicum.main_svc.dto.category.NewCategoryDto;
+import ru.practicum.main_svc.dto.comment.CommentDto;
 import ru.practicum.main_svc.dto.compilation.CompilationDto;
 import ru.practicum.main_svc.dto.compilation.NewCompilationDto;
 import ru.practicum.main_svc.dto.compilation.UpdateCompilationRequest;
@@ -15,10 +16,7 @@ import ru.practicum.main_svc.dto.event.UpdateEventRequest;
 import ru.practicum.main_svc.dto.user.NewUserRequest;
 import ru.practicum.main_svc.dto.user.UserDto;
 import ru.practicum.main_svc.enums.EventState;
-import ru.practicum.main_svc.service.CategoryService;
-import ru.practicum.main_svc.service.CompilationService;
-import ru.practicum.main_svc.service.EventService;
-import ru.practicum.main_svc.service.UserService;
+import ru.practicum.main_svc.service.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
@@ -35,6 +33,7 @@ public class AdminApiController {
     private final UserService userService;
     private final CompilationService compilationService;
     private final EventService eventService;
+    private final CommentService commentService;
 
     @PostMapping("/categories")
     @ResponseStatus(HttpStatus.CREATED)
@@ -107,5 +106,16 @@ public class AdminApiController {
     @ResponseStatus(value = HttpStatus.NO_CONTENT)
     public void deleteCompilation(@PathVariable("compId") Long compId) {
         compilationService.deleteCompilation(compId);
+    }
+
+    @GetMapping("/comments/{commentId}")
+    public CommentDto getCommentById(@PathVariable(value = "commentId") Long commentId) {
+        return commentService.getCommentById(commentId);
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCommentByUser(@PathVariable(value = "commentId") Long commentId) {
+        commentService.deleteCommentByAdmin(commentId);
     }
 }

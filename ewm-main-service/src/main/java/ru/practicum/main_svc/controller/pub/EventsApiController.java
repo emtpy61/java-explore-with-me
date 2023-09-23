@@ -4,9 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.main_svc.dto.comment.CommentDto;
 import ru.practicum.main_svc.dto.event.EventFullDto;
 import ru.practicum.main_svc.dto.event.EventShortDto;
 import ru.practicum.main_svc.enums.SortValue;
+import ru.practicum.main_svc.service.CommentService;
 import ru.practicum.main_svc.service.EventService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,12 +23,13 @@ import java.util.List;
 @Slf4j
 public class EventsApiController {
     private final EventService eventService;
+    private final CommentService commentService;
 
-    @GetMapping("/{id}")
-    public EventFullDto getEvent(@PathVariable("id") Long id,
+    @GetMapping("/{eventId}")
+    public EventFullDto getEvent(@PathVariable("eventId") Long eventId,
             HttpServletRequest request) {
 
-        return eventService.getEvent(id, request.getRequestURI(), request.getRemoteAddr());
+        return eventService.getEvent(eventId, request.getRequestURI(), request.getRemoteAddr());
     }
 
 
@@ -46,5 +49,12 @@ public class EventsApiController {
 
         return eventService.getEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size,
                 request.getRequestURI(), request.getRemoteAddr());
+    }
+
+    @GetMapping("/{eventId}/comments")
+    public List<CommentDto> getCommentsByEvent(@PathVariable("eventId") Long eventId,
+            @Valid @RequestParam(value = "from", required = false, defaultValue = "0") Integer from,
+            @Valid @RequestParam(value = "size", required = false, defaultValue = "10") Integer size) {
+        return commentService.getCommentsByEvent(eventId, from, size);
     }
 }
