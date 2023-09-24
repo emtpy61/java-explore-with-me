@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.main_svc.dto.category.CategoryDto;
 import ru.practicum.main_svc.dto.category.NewCategoryDto;
 import ru.practicum.main_svc.dto.comment.CommentDto;
+import ru.practicum.main_svc.dto.comment.NewCommentDto;
 import ru.practicum.main_svc.dto.compilation.CompilationDto;
 import ru.practicum.main_svc.dto.compilation.NewCompilationDto;
 import ru.practicum.main_svc.dto.compilation.UpdateCompilationRequest;
@@ -111,6 +112,13 @@ public class AdminApiController {
     @GetMapping("/comments/{commentId}")
     public CommentDto getCommentById(@PathVariable(value = "commentId") Long commentId) {
         return commentService.getCommentById(commentId);
+    }
+
+    @PatchMapping("/comments/{commentId}")
+    public CommentDto updateComment(
+            @PathVariable(value = "commentId") Long commentId,
+            @Valid @RequestBody NewCommentDto body) {
+        return commentService.updateCommentByAdmin(body, commentId);
     }
 
     @DeleteMapping("/comments/{commentId}")

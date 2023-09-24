@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.main_svc.dto.comment.CommentDto;
 import ru.practicum.main_svc.dto.comment.NewCommentDto;
 import ru.practicum.main_svc.enums.EventState;
+import ru.practicum.main_svc.enums.RequestStatus;
 import ru.practicum.main_svc.exception.ewm.AccessDeniedException;
 import ru.practicum.main_svc.exception.ewm.EventNotPublishedException;
 import ru.practicum.main_svc.exception.ewm.NotFoundException.CommentNotFoundException;
@@ -45,8 +46,15 @@ public class CommentServiceImpl implements CommentService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         if (!event.getState().equals(EventState.PUBLISHED)) {
-            throw new EventNotPublishedException("Event is not published yet");
+            throw new EventNotPublishedException("Event is not published yet.");
         }
+
+        boolean userHasParticipatedInEvent = event.getRequestList().stream()
+                .anyMatch(request -> request.getRequester().getId().equals(userId));
+        if (!userHasParticipatedInEvent) {
+            throw new AccessDeniedException("Only users with requests can comment.");
+        }
+
 
         Comment comment = commentMapper.toModel(newCommentDto);
 
@@ -92,9 +100,21 @@ public class CommentServiceImpl implements CommentService {
                 .orElseThrow(() -> new CommentNotFoundException(commentId));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-        if (!comment.getAuthor().equals(user)) {
+        if (!comment.getAuthor().getId().equals(userId)) {
             throw new AccessDeniedException("Only own comments can be edited.");
         }
+        comment.setText(newCommentDto.getText());
+
+        comment = commentRepository.save(comment);
+
+        return commentMapper.toDto(comment);
+    }
+
+    @Override
+    @Transactional
+    public CommentDto updateCommentByAdmin(NewCommentDto newCommentDto, Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new CommentNotFoundException(commentId));
         comment.setText(newCommentDto.getText());
 
         comment = commentRepository.save(comment);
