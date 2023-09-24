@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.main_svc.dto.comment.CommentDto;
 import ru.practicum.main_svc.dto.comment.NewCommentDto;
 import ru.practicum.main_svc.enums.EventState;
-import ru.practicum.main_svc.enums.RequestStatus;
 import ru.practicum.main_svc.exception.ewm.AccessDeniedException;
 import ru.practicum.main_svc.exception.ewm.EventNotPublishedException;
 import ru.practicum.main_svc.exception.ewm.NotFoundException.CommentNotFoundException;
@@ -54,7 +53,6 @@ public class CommentServiceImpl implements CommentService {
         if (!userHasParticipatedInEvent) {
             throw new AccessDeniedException("Only users with requests can comment.");
         }
-
 
         Comment comment = commentMapper.toModel(newCommentDto);
 
