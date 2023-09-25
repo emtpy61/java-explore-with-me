@@ -151,15 +151,17 @@ public class EventServiceImpl implements EventService {
         }
 
         List<Event> events = eventRepository.findAll(predicate, pageable).getContent();
+        if (events.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        events.forEach(Event::populateConfirmedRequests);
+        getViewsFromStatisticServer(events);
 
         if (sort != null && sort.equals(SortValue.VIEWS)) {
             events.sort(Comparator.comparing(Event::getViews));
         }
-        if (events.isEmpty()) {
-            return Collections.emptyList();
-        }
-        events.forEach(Event::populateConfirmedRequests);
-        getViewsFromStatisticServer(events);
+
         return eventMapper.toShortDtoList(events);
     }
 

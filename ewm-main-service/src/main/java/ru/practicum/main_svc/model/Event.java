@@ -54,6 +54,10 @@ public class Event {
     @JoinColumn(name = "event_id")
     private List<Request> requestList = new ArrayList<>();
 
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "event_id")
+    private List<Comment> commentList = new ArrayList<>();
+
     public void populateConfirmedRequests() {
         setConfirmedRequests((int) this.requestList.stream()
                 .filter(request -> request.getStatus() == RequestStatus.CONFIRMED)
